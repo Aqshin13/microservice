@@ -13,11 +13,11 @@ import java.util.Properties;
 @Service
 public class EmailService {
 
-    @Value("app.mail.username")
+    @Value("${app.mail.username}")
     private String usernameForEmail;
 
 
-    @Value("app.mail.password")
+    @Value("${app.mail.password}")
     private String passwordForEmail;
 
     private JavaMailSenderImpl mailSender;
@@ -36,6 +36,11 @@ public class EmailService {
         this.mailSender = new JavaMailSenderImpl();
         mailSender.setHost("smtp.ethereal.email");
         mailSender.setPort(587);
+
+        System.out.println(usernameForEmail);
+        System.out.println("//////////////////////////////////");
+        System.out.println(passwordForEmail);
+
         mailSender.setUsername(usernameForEmail);
         mailSender.setPassword(passwordForEmail);
         Properties properties = mailSender.getJavaMailProperties();

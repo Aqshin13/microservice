@@ -34,7 +34,7 @@ public class SecurityFilter implements GatewayFilter {
         String token = authHeader.substring(7);
         return webClientBuilder.build()
                 .post()
-                .uri("http://localhost:8081/api/v1/auth/verify?token=" + token)
+                .uri("http://auth-service:8081/api/v1/auth/verify?token=" + token)
                 .exchangeToMono(clientResponse -> {
                     if (clientResponse.statusCode().is2xxSuccessful()) {
                         exchange.getResponse().getHeaders().add("Content-Type", "application/json");
