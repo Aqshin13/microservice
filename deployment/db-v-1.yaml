@@ -4,9 +4,9 @@ metadata:
   name: mysql-init
 data:
   init.sql: |
-    CREATE DATABASE IF NOT EXISTS 'auth-service';
-    CREATE DATABASE IF NOT EXISTS 'user-service';
-    CREATE DATABASE IF NOT EXISTS 'share-service';
+    CREATE DATABASE IF NOT EXISTS auth;
+    CREATE DATABASE IF NOT EXISTS user;
+    CREATE DATABASE IF NOT EXISTS share;
 ---
 apiVersion: v1
 kind: Service
@@ -16,10 +16,10 @@ spec:
   selector:
     app: mysql
   ports:
-     - name: mysql          
-       port: 3306           
-       targetPort: 3306    
-       protocol: TCP
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+      protocol: TCP
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -54,10 +54,11 @@ spec:
           configMap:
             name: mysql-init
   volumeClaimTemplates:
-      - metadata:
-          name: mysql-data
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 1Gi
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "hostpath"  # Docker Desktop için
+        resources:
+          requests:
+            storage: 1Gi
