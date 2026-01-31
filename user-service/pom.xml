@@ -78,7 +78,10 @@
 		</dependency>
 
 <!--		New-->
-
+	<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 
 	</dependencies>
 	<dependencyManagement>
@@ -116,6 +119,16 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+				</configuration>
+			</plugin>
+
+			 <plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<name>agshin13/${project.artifactId}:s2</name>
+					</image>
 				</configuration>
 			</plugin>
 		</plugins>
