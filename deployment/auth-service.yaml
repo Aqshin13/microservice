@@ -23,7 +23,7 @@ spec:
         app: auth-service
     spec:
       containers:
-      - image: agshin13/auth-service:s2
+      - image: agshin13/auth-service:s1
         imagePullPolicy: IfNotPresent
         name: auth-service-container
         resources:
@@ -45,7 +45,7 @@ spec:
           - name: SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS
             value: "kafka:9092"
           - name: SPRING_DATASOURCE_URL
-            value: "jdbc:mysql://mysql:3306/auth-service"
+            value: "jdbc:mysql://mysql:3306/auth"
 
         startupProbe:
             httpGet:

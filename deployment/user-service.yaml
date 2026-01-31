@@ -41,7 +41,7 @@ spec:
           - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
             value: "true"
           - name: SPRING_DATASOURCE_URL
-            value: "jdbc:mysql://mysql:3306/user-service"
+            value: "jdbc:mysql://mysql:3306/user"
 
         startupProbe:
             httpGet:

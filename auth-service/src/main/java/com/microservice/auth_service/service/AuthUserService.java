@@ -34,7 +34,7 @@ public class AuthUserService {
 
     private final KafkaProducer kafkaProducer;
 
-    @Transactional
+    @Transactional(rollbackOn = Exception.class)
     public void saveAuthUser(UserSaveRequest userSaveRequest) {
         AuthUser authUser = AuthUser.builder()
                 .userName(userSaveRequest.getUserName())

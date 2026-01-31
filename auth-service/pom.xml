@@ -141,7 +141,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<image>
-						<name>agshin13/${project.artifactId}:s2</name>
+						<name>agshin13/${project.artifactId}:s1</name>
 					</image>
 				</configuration>
 			</plugin>
