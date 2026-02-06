@@ -1,0 +1,198 @@
+services:
+  userservicedb:
+    container_name: userservicedb
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: user-service
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"  
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 45s 
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk==
+      
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_NUM_PARTITIONS: 1
+      
+      KAFKA_JMX_PORT: 9999
+      
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - ms
+
+  authservicedb:
+    container_name: authservicedb
+    ports:
+      - 3307:3306
+    environment:
+      MYSQL_DATABASE: auth-service
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka:9092
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+
+  shareservicedb:
+    container_name: shareservicedb
+    ports:
+      - 3308:3306
+    environment:
+      MYSQL_DATABASE: share-service
+    extends:
+      file: common-config.yml
+      service: microservice-db-config
+
+
+  authservice:
+    image: "agshin13/auth-service:s1"
+    container_name: auth-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_APPLICATION_NAME: auth-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://authservicedb:3306/auth-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS: kafka:9092
+      # EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      authservicedb:
+        condition: service_healthy
+      # kafka:
+      #   condition: service_healthy
+      # service-discovery:
+      #   condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  apigateway:
+    image: "agshin13/api-gateway:s3"
+    container_name: api-gateway
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_APPLICATION_NAME: api-gateway
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-discovery:8761/eureka/"
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+
+
+
+  userservice:
+    image: "agshin13/user-service:s2"
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://userservicedb:3306/user-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://service-discovery:8761/eureka/"
+      # EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      userservicedb:
+        condition: service_healthy
+      # service-discovery:
+      #   condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  shareservice:
+    image: "agshin13/share-service:s2"
+    container_name: share-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_APPLICATION_NAME: share-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://shareservicedb:3306/share-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-discovery:8761/eureka/
+      # EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+    depends_on:
+      shareservicedb:
+        condition: service_healthy
+      # service-discovery:
+      #   condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+
+  emailservice:
+    image: "agshin13/email-service:s2"
+    container_name: email-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS: kafka:9092
+      APP_MAIL_USERNAME: katrina.smitham52@ethereal.email
+      APP_MAIL_PASSWORD: af2pdgKxf7ewg9k1wW
+    # depends_on:
+    #   kafka:
+    #     condition: service_healthy
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+  service-discovery:
+    image: "agshin13/service-discovery:s2"
+    container_name: service-discovery
+    ports:
+      - "8761:8761"
+    environment:
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*" 
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+      SPRING_APPLICATION_NAME: service-discovery
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s 
+    extends:
+      file: common-config.yml
+      service: microservice-base-config
+
+volumes:
+  kafka-data:
+
+
+networks:
+  ms:
+    driver: "bridge"
